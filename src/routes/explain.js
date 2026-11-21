@@ -2,7 +2,8 @@
 const router = require('express').Router();
 const { BSON } = require('mongodb');
 const { mflix } = require('../db');
-const { bad, notFound, toInt, describe, requireBody } = require('../utils/validate');
+const { bad, notFound, toInt, describe, requireBody, parseEJSON } = require('../utils/validate');
+const { summarize } = require('../utils/explain');
 
 let sampleMovieId = null;
 
@@ -26,7 +27,7 @@ async function getSamples() {
     },
     {
       key: 'runtime', title: 'Phim dài hơn 200 phút', collection: 'movies',
-      filter: { runtime: { $gt: 200 } }, note: 'Range query trên index { runtime: 1 }',
+      filter: { runtime: { $gt: 200 } }, note: 'Range query trên index runtime_1 (nếu đã drop ở Bài 7 thì planner cũng phải COLLSCAN)',
     },
     {
       key: 'comments', title: 'Comments của một phim, mới nhất trước', collection: 'comments',
@@ -42,30 +43,6 @@ async function getSamples() {
       filter: { countries: 'Vietnam' }, note: 'KHÔNG có index trên countries → luôn là COLLSCAN',
     },
   ];
-}
-
-// Rút gọn output explain() thành vài chỉ số chính
-function summarize(ex) {
-  let root = ex.queryPlanner?.winningPlan;
-  if (root?.queryPlan) root = root.queryPlan; // định dạng của SBE engine
-  const stages = [];
-  const indexes = new Set();
-  (function walk(n) {
-    if (!n) return;
-    stages.push(n.stage);
-    if (n.indexName) indexes.add(n.indexName);
-    if (n.inputStage) walk(n.inputStage);
-    if (n.inputStages) n.inputStages.forEach(walk);
-  })(root);
-  const es = ex.executionStats || {};
-  return {
-    plan: stages.join(' ← '),
-    index: indexes.size ? [...indexes].join(', ') : null,
-    nReturned: es.nReturned,
-    totalKeysExamined: es.totalKeysExamined,
-    totalDocsExamined: es.totalDocsExamined,
-    executionTimeMillis: es.executionTimeMillis,
-  };
 }
 
 function explainFind(collection, filter, sort, hint) {
@@ -95,34 +72,13 @@ router.get('/run/:key', async (req, res) => {
 
 // Chạy find() tùy ý (chỉ đọc) trên các collection cho phép
 const ALLOWED = ['movies', 'comments', 'users', 'theaters'];
-const FORBIDDEN = new Set(['$where', '$function', '$accumulator']);
-
-function parseJson(text, label) {
-  if (!text || !String(text).trim()) return {};
-  let v;
-  try {
-    v = BSON.EJSON.parse(String(text), { relaxed: true });
-  } catch (e) {
-    throw bad(`${label} không phải JSON hợp lệ: ${e.message}`);
-  }
-  if (!v || typeof v !== 'object' || Array.isArray(v)) throw bad(`${label} phải là một object`);
-  (function check(o) {
-    if (o && typeof o === 'object') {
-      for (const k of Object.keys(o)) {
-        if (FORBIDDEN.has(k)) throw bad(`Không cho phép toán tử ${k}`);
-        check(o[k]);
-      }
-    }
-  })(v);
-  return v;
-}
 
 router.post('/custom', async (req, res) => {
   requireBody(req.body);
   const { collection } = req.body;
   if (!ALLOWED.includes(collection)) throw bad('Collection không hợp lệ');
-  const filter = parseJson(req.body.filter, 'Filter');
-  const sort = parseJson(req.body.sort, 'Sort');
+  const filter = parseEJSON(req.body.filter, 'Filter');
+  const sort = parseEJSON(req.body.sort, 'Sort');
   const limit = toInt(req.body.limit, 10, 1, 50);
   const hasSort = Object.keys(sort).length > 0;
   const projection = collection === 'users' ? { password: 0 } : undefined;

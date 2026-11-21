@@ -84,7 +84,52 @@ function requireBody(body) {
   return body;
 }
 
+// ---------- Tên database / collection do người dùng tạo (Sandbox, Exercise 3) ----------
+const SYSTEM_DBS = new Set(['admin', 'local', 'config']);
+const isUserDb = (name) => !SYSTEM_DBS.has(String(name).toLowerCase()) && !/^sample_/i.test(name);
+
+function userDbName(v, label = 'Tên database') {
+  const s = String(v ?? '').trim();
+  if (!/^[A-Za-z0-9_-]{1,63}$/.test(s)) throw bad(`${label} chỉ được gồm chữ, số, _ hoặc - (tối đa 63 ký tự)`);
+  if (!isUserDb(s)) throw bad(`Không được dùng database "${s}": đây là database hệ thống hoặc dữ liệu mẫu`);
+  return s;
+}
+
+function collName(v, label = 'Tên collection') {
+  const s = String(v ?? '').trim();
+  if (!/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,119}$/.test(s) || s.startsWith('system.')) {
+    throw bad(`${label} không hợp lệ: chỉ gồm chữ, số, _ - . và không bắt đầu bằng "system."`);
+  }
+  return s;
+}
+
+// Parse Extended JSON do người dùng nhập (filter, sort, document). Chặn toán tử chạy JavaScript.
+const FORBIDDEN_OPS = new Set(['$where', '$function', '$accumulator']);
+function parseEJSON(text, label, { allowEmpty = true } = {}) {
+  if (!text || !String(text).trim()) {
+    if (allowEmpty) return {};
+    throw bad(`${label} không được để trống`);
+  }
+  let v;
+  try {
+    v = BSON.EJSON.parse(String(text), { relaxed: true });
+  } catch (e) {
+    throw bad(`${label} không phải JSON hợp lệ: ${e.message}`);
+  }
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw bad(`${label} phải là một object { ... }`);
+  (function check(o) {
+    if (o && typeof o === 'object') {
+      for (const k of Object.keys(o)) {
+        if (FORBIDDEN_OPS.has(k)) throw bad(`Không cho phép toán tử ${k}`);
+        check(o[k]);
+      }
+    }
+  })(v);
+  return v;
+}
+
 module.exports = {
   HttpError, bad, notFound, has, toObjectId, toInt, toNum, toList, escapeRegex,
   pageParams, describe, str, num, email, requireBody,
+  isUserDb, userDbName, collName, parseEJSON,
 };

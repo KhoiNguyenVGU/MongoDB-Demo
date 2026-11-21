@@ -45,8 +45,15 @@ Mỗi lần `git push` lên `main`, Render tự deploy lại. Gói free sẽ "ng
 | `/movies/:id` | Chi tiết phim, sửa/xóa phim, CRUD comments |
 | `/theaters` | CRUD rạp, bản đồ Leaflet, tìm rạp gần một điểm (bấm lên bản đồ) |
 | `/users` | CRUD user: password hash bằng bcrypt, không bao giờ trả về client, email unique (409) |
-| `/watchlist` | CRUD trên database thứ hai `movie_demo.watchlist`: toggle đã xem, chấm điểm |
-| `/explorer` | So sánh `explain("executionStats")` có index và COLLSCAN; chạy thử `find()` tùy ý (chỉ đọc) |
+| `/sandbox` | Duyệt mọi database bạn tự tạo (ẩn `admin`/`local`/`config` và `sample_*`): tạo/drop database và collection; thêm, sửa (`replaceOne`), xóa, lọc document dạng JSON |
+| `/explorer` | 3 tab: **Bài tập** (8 bài trong tài liệu "MongoDB Demo Exercise", chạy từng query trên Atlas), **Index vs COLLSCAN**, **Tự viết query** (`find()` chỉ đọc) |
+
+### Tab Bài tập (Query Explorer)
+
+- Nội dung bài lấy nguyên văn từ tài liệu; query nằm ở [`src/exercises.js`](src/exercises.js). Mỗi query gồm lệnh mongosh để hiển thị và code driver tương đương để chạy.
+- Chỉ các query định nghĩa sẵn mới chạy được (`POST /api/exercises/run/:id`); client không gửi được query tùy ý.
+- Bài 3 mặc định chạy trên `movie_demo.watchlist` như tài liệu, nhưng có thể đổi sang tên database/collection khác. Lựa chọn được lưu trong trình duyệt và lệnh mongosh hiển thị tự cập nhật theo. Database hệ thống và `sample_*` bị chặn ở server. Các bước Delete, Drop và dropIndex có hộp thoại xác nhận trước khi chạy.
+- Thanh trạng thái hiển thị số document trong collection của Bài 3 (bấm vào để mở trong Sandbox) và cho biết index `runtime_1` có đang tồn tại không. Nếu index còn, bước "Without index" của Bài 7 sẽ vẫn dùng IXSCAN.
 
 Mọi danh sách/biểu đồ đều có nút **`{ } xx ms`** để xem query MongoDB đã chạy (cú pháp mongosh). Sau mỗi thao tác thêm/sửa/xóa, toast hiện link **Xem query**.
 
@@ -68,7 +75,7 @@ Mọi danh sách/biểu đồ đều có nút **`{ } xx ms`** để xem query Mo
 | `explain("executionStats")` + `hint({ $natural: 1 })` | So sánh IXSCAN và COLLSCAN | `src/routes/explain.js` |
 | `distinct` | Dropdown thể loại, bang | `src/routes/movies.js` |
 | Dữ liệu bẩn: lọc bằng `$type` | 35 phim có `year` là chuỗi, 61 phim có `imdb.rating` rỗng | `src/routes/stats.js` |
-| Làm việc với 2 database trong 1 cluster | Watchlist (`movie_demo`) | `src/routes/watchlist.js` |
+| Liệt kê database/collection, `createCollection`, `drop`, `dropDatabase`, `replaceOne` | Sandbox | `src/routes/sandbox.js` |
 
 ## Cấu trúc
 
@@ -76,7 +83,8 @@ Mọi danh sách/biểu đồ đều có nút **`{ } xx ms`** để xem query Mo
 server.js                 Express app, error handler, kết nối DB khi khởi động
 src/db.js                 MongoClient singleton
 src/utils/validate.js     validate input, ObjectId, phân trang, mô tả query
-src/routes/               stats, movies, comments, theaters, users, watchlist, explain
+src/routes/               stats, movies, comments, theaters, users, sandbox, explain, exercises
+src/exercises.js          nội dung + query của các bài tập
 public/                   các trang HTML + js/ + css/
 ```
 
@@ -91,7 +99,10 @@ GET    /api/movies/:id/comments POST /api/movies/:id/comments
 PUT    /api/comments/:id        DELETE /api/comments/:id
 GET    /api/theaters?q=&state=  GET /api/theaters/near?lat=&lng=&km=   POST/PUT/DELETE /api/theaters[/:id]
 GET    /api/users?q=            POST/PUT/DELETE /api/users[/:id]
-GET    /api/watchlist           POST/PUT/DELETE /api/watchlist[/:id]
+GET    /api/sandbox/databases   POST /api/sandbox/databases   DELETE /api/sandbox/databases/:db
+POST   /api/sandbox/databases/:db/collections   DELETE /api/sandbox/databases/:db/collections/:coll
+GET|POST|PUT|DELETE /api/sandbox/databases/:db/collections/:coll/docs   (PUT/DELETE: body { id })
+GET    /api/exercises           GET /api/exercises/state?db=&collection=   POST /api/exercises/run/:id
 GET    /api/explain/samples     GET /api/explain/run/:key   POST /api/explain/custom
 ```
 

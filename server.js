@@ -42,13 +42,15 @@ app.use('/api', require('./src/routes/comments')); // /api/movies/:id/comments, 
 app.use('/api/movies', require('./src/routes/movies'));
 app.use('/api/theaters', require('./src/routes/theaters'));
 app.use('/api/users', require('./src/routes/users'));
-app.use('/api/watchlist', require('./src/routes/watchlist'));
+app.use('/api/sandbox', require('./src/routes/sandbox'));
 app.use('/api/explain', require('./src/routes/explain'));
+app.use('/api/exercises', require('./src/routes/exercises'));
 app.use('/api', (req, res) => res.status(404).json({ error: 'API không tồn tại' }));
 
 // ---------- Frontend ----------
 app.use(express.static(PUBLIC, { extensions: ['html'] }));
 app.get('/movies/:id', (req, res) => res.sendFile(path.join(PUBLIC, 'movie.html')));
+app.get('/watchlist', (req, res) => res.redirect(301, '/sandbox?db=movie_demo&coll=watchlist')); // trang cũ
 app.use((req, res) => res.status(404).sendFile(path.join(PUBLIC, '404.html')));
 
 // ---------- Error handler tập trung ----------
@@ -59,6 +61,7 @@ app.use((err, req, res, next) => {
   if (err.code === 121) { status = 400; message = 'Document không qua được schema validation của collection'; }
   if (err.code === 11000) { status = 409; message = 'Dữ liệu bị trùng (duplicate key)'; }
   if (err.code === 50) { status = 504; message = 'Query chạy quá thời gian cho phép (maxTimeMS)'; }
+  if (err.name === 'MongoServerError' && status === 500) { status = 400; message = `MongoServerError: ${err.message}`; }
   if (status >= 500) console.error(`[${req.method} ${req.originalUrl}]`, err);
   res.status(status).json({ error: message });
 });

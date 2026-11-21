@@ -35,7 +35,7 @@ async function api(path, { method = 'GET', body } = {}) {
 /* ---------- Navbar + theme ---------- */
 const NAV = [
   ['/', 'Dashboard'], ['/movies', 'Movies'], ['/theaters', 'Theaters'],
-  ['/users', 'Users'], ['/watchlist', 'Watchlist'], ['/explorer', 'Query Explorer'],
+  ['/users', 'Users'], ['/sandbox', 'Sandbox'], ['/explorer', 'Query Explorer'],
 ];
 
 function renderNav() {
@@ -175,26 +175,41 @@ function confirmDialog(message, { title = 'Xác nhận xóa', okText = 'Xóa' } 
 }
 
 /* ---------- Query viewer ---------- */
+// db.<coll> chỉ hợp lệ khi tên là identifier; ngược lại phải dùng db.getCollection("...")
+const collRef = (name) => (/^[A-Za-z_$][\w$]*$/.test(name) ? `db.${name}` : `db.getCollection(${JSON.stringify(name)})`);
+
 function toShell(q) {
   const j = (o) => JSON.stringify(o, null, 2);
   let s;
+  if (q.database) {
+    const inner = { ...q, database: undefined };
+    return `use ${q.database}\n` + toShell(inner);
+  }
+  if (q.op === 'dropDatabase') return 'db.dropDatabase()';
+  if (q.op === 'createCollection') return `db.createCollection(${JSON.stringify(q.args?.[0] ?? q.collection)})`;
   if (q.op === 'transaction') {
     s = `const session = client.startSession();\nsession.withTransaction(async () => {\n${q.steps.map((st) => '  ' + toShell(st).replace(/\n/g, '\n  ') + ';').join('\n')}\n});`;
   } else if (q.op === 'find') {
-    s = `db.${q.collection}.find(${j(q.filter || {})}${q.projection ? ', ' + j(q.projection) : ''})`;
+    s = `${collRef(q.collection)}.find(${j(q.filter || {})}${q.projection ? ', ' + j(q.projection) : ''})`;
     if (q.sort) s += `.sort(${j(q.sort)})`;
     if (q.skip) s += `.skip(${q.skip})`;
     if (q.limit) s += `.limit(${q.limit})`;
   } else if (q.op === 'aggregate') {
-    s = `db.${q.collection}.aggregate(${j(q.pipeline)})`;
+    s = `${collRef(q.collection)}.aggregate(${j(q.pipeline)})`;
   } else {
     const args = ['filter', 'document', 'update'].filter((k) => q[k] !== undefined).map((k) => j(q[k]));
-    s = `db.${q.collection}.${q.op}(${args.join(', ')})`;
+    s = `${collRef(q.collection)}.${q.op}(${args.join(', ')})`;
   }
+  return mongoish(s);
+}
+
+// Extended JSON -> cú pháp mongosh: {"$oid": ".."} -> ObjectId(".."), {"$date": ".."} -> ISODate("..")
+function mongoish(s) {
   return s
     .replace(/\{\s*"\$oid":\s*"([a-f\d]{24})"\s*\}/gi, 'ObjectId("$1")')
     .replace(/\{\s*"\$date":\s*"([^"]+)"\s*\}/g, 'ISODate("$1")');
 }
+const prettyResult = (v) => mongoish(JSON.stringify(v, null, 2));
 
 function showQuery(q) {
   if (!q) { toast('Chưa có query nào được chạy', 'info'); return; }
