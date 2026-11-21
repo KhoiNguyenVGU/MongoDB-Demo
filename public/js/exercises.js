@@ -87,9 +87,12 @@ function queryBlock(q) {
   </div>`;
 }
 
-function partBlock(p) {
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const partId = (ex, p) => `ex-${ex.no}-${slug(p.name)}`;
+
+function partBlock(p, ex) {
   return `
-  <section class="ex-part" data-part>
+  <section class="ex-part" data-part id="${partId(ex, p)}">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h3 class="font-semibold">${esc(p.name)}</h3>
       <button class="btn btn-sm" data-reveal aria-expanded="false">Hiện đáp án</button>
@@ -127,7 +130,7 @@ function exerciseCard(ex) {
     ${head}
     ${ex.configurable ? targetForm() : ''}
     ${ex.no === 7 ? '<div id="ex7tip" class="tip mt-3"></div>' : ''}
-    ${ex.parts.map(partBlock).join('')}
+    ${ex.parts.map((p) => partBlock(p, ex)).join('')}
   </article>`;
 }
 
@@ -181,6 +184,8 @@ async function runQuery(id, el) {
     const r = await api(`/api/exercises/run/${encodeURIComponent(id)}`, { method: 'POST', body });
     out.innerHTML = resultView(r);
     if (q.write) toast(`Đã chạy: ${shell.split('\n').pop()}`, 'success');
+    doneQueries.add(id);
+    updateProgress();
   } catch (e) {
     out.innerHTML = `<div class="form-error mt-3 font-mono text-xs">${esc(e.message)}</div>`;
   } finally {
@@ -224,11 +229,102 @@ function bindTargetForm() {
   $('[data-target-reset]', f).onclick = () => applyTarget({ ...defaults });
 }
 
+/* ---------- Sidebar mục lục ---------- */
+const doneQueries = new Set(); // query đã chạy thành công trong phiên này
+
+let pinned = null; // mục vừa bấm ở sidebar: giữ highlight cho tới khi cuộn xong
+let pinTimer = null;
+function releasePinSoon() {
+  clearTimeout(pinTimer);
+  pinTimer = setTimeout(() => { pinned = null; }, 700);
+}
+
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  // Mở đáp án khi nhảy tới một phần, để thấy ngay query
+  if (el.matches('[data-part]')) setReveal(el, true);
+  pinned = id;
+  setActive(id);
+  releasePinSoon();
+  el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+}
+
+function renderSide() {
+  $('#exSide').innerHTML = exercises.map((ex) => `
+    <div class="side-group">
+      <button type="button" class="side-link" data-nav="ex-${ex.no}">
+        <span class="side-no">${ex.no}</span><span class="truncate">${esc(ex.title)}</span>
+        ${ex.setup ? '<span class="side-tag">setup</span>' : ''}
+      </button>
+      ${(ex.parts || []).map((p) => `
+        <button type="button" class="side-sub" data-nav="${partId(ex, p)}" data-parent="ex-${ex.no}">
+          <span class="truncate">${esc(p.name)}</span><span class="side-check" data-check="${partId(ex, p)}" hidden aria-label="đã chạy hết">✓</span>
+        </button>`).join('')}
+    </div>`).join('');
+  $$('#exSide [data-nav]').forEach((b) => { b.onclick = () => scrollToId(b.dataset.nav); });
+  $('#exTop').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress();
+}
+
+// ✓ cho phần đã chạy hết query + đếm tổng tiến độ
+function updateProgress() {
+  let total = 0;
+  let done = 0;
+  for (const ex of exercises) {
+    for (const p of ex.parts || []) {
+      const ids = p.queries.map((q) => q.id);
+      total += ids.length;
+      const n = ids.filter((id) => doneQueries.has(id)).length;
+      done += n;
+      const mark = $(`[data-check="${partId(ex, p)}"]`);
+      if (mark) mark.hidden = n < ids.length;
+    }
+  }
+  $('#exProgress').textContent = `${done}/${total} query đã chạy`;
+}
+
+// Scrollspy: đánh dấu phần đang đọc (phần cuối cùng có mép trên đã vượt qua navbar)
+let spyTicking = false;
+function updateSpy() {
+  spyTicking = false;
+  if ($('[data-panel="exercises"]').hidden) return;
+  if (pinned) { releasePinSoon(); return; } // đang cuộn tới mục vừa bấm
+  const targets = $$('#exList article, #exList .ex-part');
+  let current = targets[0];
+  for (const el of targets) {
+    if (el.getBoundingClientRect().top <= 120) current = el;
+    else break;
+  }
+  // Cuộn tay tới cuối trang: mục cuối cùng đang hiển thị
+  if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) current = targets[targets.length - 1];
+  if (current) setActive(current.id);
+}
+
+function setActive(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const parent = el.matches('.ex-part') ? el.closest('article').id : id;
+  $$('#exSide [data-nav]').forEach((b) => {
+    const on = b.dataset.nav === id || (b.classList.contains('side-link') && b.dataset.nav === parent);
+    b.classList.toggle('active', on);
+    if (on) b.setAttribute('aria-current', 'location'); else b.removeAttribute('aria-current');
+  });
+  // Giữ mục đang active trong tầm nhìn của sidebar
+  const active = $('#exSide .side-sub.active') || $('#exSide .side-link.active');
+  const side = $('.ex-side');
+  if (active && side.scrollHeight > side.clientHeight) {
+    const a = active.getBoundingClientRect(); const s = side.getBoundingClientRect();
+    if (a.top < s.top + 40 || a.bottom > s.bottom - 40) active.scrollIntoView({ block: 'nearest' });
+  }
+}
+window.addEventListener('scroll', () => { if (!spyTicking) { spyTicking = true; requestAnimationFrame(updateSpy); } }, { passive: true });
+$$('[data-tab]').forEach((b) => b.addEventListener('click', () => requestAnimationFrame(updateSpy)));
+
 function renderExercises() {
   $('#exToc').innerHTML = exercises.map((ex) => `<button type="button" class="chip" data-goto="${ex.no}">${ex.no}. ${esc(ex.title)}</button>`).join('');
-  $$('#exToc [data-goto]').forEach((b) => {
-    b.onclick = () => $(`#ex-${b.dataset.goto}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  $$('#exToc [data-goto]').forEach((b) => { b.onclick = () => scrollToId(`ex-${b.dataset.goto}`); });
+  renderSide();
   $('#exList').innerHTML = exercises.map(exerciseCard).join('');
   $$('#exList [data-q]').forEach((el) => { $('[data-run]', el).onclick = () => runQuery(el.dataset.q, el); });
   $$('#exList [data-part]').forEach((p) => {
@@ -239,6 +335,7 @@ function renderExercises() {
   try { showAll = localStorage.getItem('exShowAll') === '1'; } catch { /* ignore */ }
   $('#showAll').checked = showAll;
   $$('#exList [data-part]').forEach((p) => setReveal(p, showAll));
+  updateSpy();
 }
 
 $('#showAll').addEventListener('change', (e) => {

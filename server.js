@@ -45,6 +45,7 @@ app.use('/api/users', require('./src/routes/users'));
 app.use('/api/sandbox', require('./src/routes/sandbox'));
 app.use('/api/explain', require('./src/routes/explain'));
 app.use('/api/exercises', require('./src/routes/exercises'));
+app.use('/api/shell', require('./src/routes/shell'));
 app.use('/api', (req, res) => res.status(404).json({ error: 'API không tồn tại' }));
 
 // ---------- Frontend ----------

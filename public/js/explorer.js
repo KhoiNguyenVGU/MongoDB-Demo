@@ -1,3 +1,4 @@
+/* Tab "Index vs COLLSCAN" của Query Explorer */
 let samples = [];
 
 function planBadge(s) {
@@ -60,46 +61,6 @@ $('#runAll').onclick = async () => {
   for (const s of samples) await run(s.key);
   $('#runAll').disabled = false;
 };
-
-$('#custom').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const f = e.currentTarget;
-  const btn = $('[type=submit]', f);
-  btn.disabled = true;
-  $('#customOut').innerHTML = skeletonRows(1, 'h-40');
-  try {
-    const res = await api('/api/explain/custom', {
-      method: 'POST',
-      body: { collection: f.collection.value, filter: f.filter.value, sort: f.sort.value, limit: f.limit.value },
-    });
-    QUERIES.custom = res.query;
-    const x = res.explain;
-    $('#customOut').innerHTML = `
-      <div class="card p-4 space-y-3">
-        <div class="flex flex-wrap gap-2 items-center text-sm">
-          ${planBadge(x)}
-          <span class="chip">index: ${esc(x.index || 'không')}</span>
-          <span class="chip">trả về ${fmt(res.data.length)} docs</span>
-          <span class="chip">keys examined ${fmt(x.totalKeysExamined)}</span>
-          <span class="chip">docs examined ${fmt(x.totalDocsExamined)}</span>
-          <span class="chip">${fmt(res.query.ms)} ms</span>
-          <button class="btn btn-sm btn-query ml-auto" data-query="custom">{ } query</button>
-        </div>
-        <pre class="code text-xs" style="max-height:480px">${esc(JSON.stringify(res.data, null, 2))}</pre>
-      </div>`;
-  } catch (err) {
-    $('#customOut').innerHTML = errorBox(err.message);
-  } finally { btn.disabled = false; }
-});
-
-$$('[data-ex]').forEach((b) => {
-  b.onclick = () => {
-    const ex = JSON.parse(b.dataset.ex);
-    const f = $('#custom');
-    f.collection.value = ex.c; f.filter.value = ex.f; f.sort.value = ex.s;
-    f.requestSubmit();
-  };
-});
 
 $('#samples').innerHTML = skeletonRows(3, 'h-32');
 api('/api/explain/samples').then(({ data }) => { samples = data; renderSamples(); }).catch((e) => { $('#samples').innerHTML = errorBox(e.message); });

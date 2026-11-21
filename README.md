@@ -46,7 +46,14 @@ Mỗi lần `git push` lên `main`, Render tự deploy lại. Gói free sẽ "ng
 | `/theaters` | CRUD rạp, bản đồ Leaflet, tìm rạp gần một điểm (bấm lên bản đồ) |
 | `/users` | CRUD user: password hash bằng bcrypt, không bao giờ trả về client, email unique (409) |
 | `/sandbox` | Duyệt mọi database bạn tự tạo (ẩn `admin`/`local`/`config` và `sample_*`): tạo/drop database và collection; thêm, sửa (`replaceOne`), xóa, lọc document dạng JSON |
-| `/explorer` | 3 tab: **Bài tập** (8 bài trong tài liệu "MongoDB Demo Exercise", chạy từng query trên Atlas), **Index vs COLLSCAN**, **Tự viết query** (`find()` chỉ đọc) |
+| `/explorer` | 3 tab: **Bài tập** (8 bài trong tài liệu "MongoDB Demo Exercise", chạy từng query trên Atlas), **Index vs COLLSCAN**, **Mongo Shell** (terminal giống mongosh) |
+
+### Tab Mongo Shell (Query Explorer)
+
+- Gõ lệnh mongosh trực tiếp trên web: `use`, `show dbs`, `show collections`, `find`/`findOne`/`aggregate`/`countDocuments`/`distinct`, `insert*`/`update*`/`replaceOne`/`delete*`, `findOneAnd*`, `bulkWrite`, `createIndex`/`getIndexes`/`dropIndex`, `explain()`, chuỗi cursor `.sort().skip().limit().project()`, gõ `it` để xem tiếp, chạy nhiều lệnh một lúc (mỗi dòng một lệnh).
+- Output định dạng như mongosh: `ObjectId('…')`, `ISODate('…')`, key không ngoặc kép, có màu.
+- **An toàn:** server không eval JavaScript. [`src/shell/parser.js`](src/shell/parser.js) đọc cú pháp mongosh (literal, `ObjectId()`, `ISODate()`, regex…) và [`src/shell/executor.js`](src/shell/executor.js) gọi driver tương ứng. Vì vậy biến, hàm và vòng lặp JS không chạy được.
+- **Rào chắn:** khóa `admin`/`local`/`config`; chặn `$where`/`$function`/`$accumulator`. Trên `sample_*`: không cho drop database/collection, không cho `deleteMany({})`/`updateMany({}, …)` không điều kiện, không cho drop index text/2dsphere mà app cần. `runCommand` chỉ nhận danh sách lệnh đọc an toàn.
 
 ### Tab Bài tập (Query Explorer)
 
@@ -103,7 +110,8 @@ GET    /api/sandbox/databases   POST /api/sandbox/databases   DELETE /api/sandbo
 POST   /api/sandbox/databases/:db/collections   DELETE /api/sandbox/databases/:db/collections/:coll
 GET|POST|PUT|DELETE /api/sandbox/databases/:db/collections/:coll/docs   (PUT/DELETE: body { id })
 GET    /api/exercises           GET /api/exercises/state?db=&collection=   POST /api/exercises/run/:id
-GET    /api/explain/samples     GET /api/explain/run/:key   POST /api/explain/custom
+GET    /api/explain/samples     GET /api/explain/run/:key
+POST   /api/shell               body { code, db, itSkip? } → { db, outputs: [ { source, kind, value | text | error, ms } ] }
 ```
 
 Lỗi luôn trả về JSON `{ "error": "..." }`: 400 khi dữ liệu không hợp lệ, 404 khi không tìm thấy, 409 khi trùng dữ liệu.

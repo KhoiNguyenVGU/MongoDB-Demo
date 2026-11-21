@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { BSON } = require('mongodb');
 const { mflix } = require('../db');
-const { bad, notFound, toInt, describe, requireBody, parseEJSON } = require('../utils/validate');
+const { notFound, describe } = require('../utils/validate');
 const { summarize } = require('../utils/explain');
 
 let sampleMovieId = null;
@@ -67,32 +67,6 @@ router.get('/run/:key', async (req, res) => {
   res.json({
     data: { indexed: summarize(withIndex), collscan: summarize(collscan) },
     query: describe(s.collection, 'find', { filter: s.filter, sort: s.sort }),
-  });
-});
-
-// Chạy find() tùy ý (chỉ đọc) trên các collection cho phép
-const ALLOWED = ['movies', 'comments', 'users', 'theaters'];
-
-router.post('/custom', async (req, res) => {
-  requireBody(req.body);
-  const { collection } = req.body;
-  if (!ALLOWED.includes(collection)) throw bad('Collection không hợp lệ');
-  const filter = parseEJSON(req.body.filter, 'Filter');
-  const sort = parseEJSON(req.body.sort, 'Sort');
-  const limit = toInt(req.body.limit, 10, 1, 50);
-  const hasSort = Object.keys(sort).length > 0;
-  const projection = collection === 'users' ? { password: 0 } : undefined;
-
-  const t = Date.now();
-  let cursor = mflix().collection(collection).find(filter, { projection, maxTimeMS: 10000 });
-  if (hasSort) cursor = cursor.sort(sort);
-  const data = await cursor.limit(limit).toArray();
-  const ms = Date.now() - t;
-  const ex = await explainFind(collection, filter, hasSort ? sort : undefined);
-  res.json({
-    data: BSON.EJSON.serialize(data, { relaxed: true }),
-    explain: summarize(ex),
-    query: { ...describe(collection, 'find', { filter, projection, sort: hasSort ? sort : undefined, limit }), ms },
   });
 });
 
