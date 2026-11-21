@@ -211,6 +211,25 @@ function mongoish(s) {
 }
 const prettyResult = (v) => mongoish(JSON.stringify(v, null, 2));
 
+// Copy vào clipboard; dự phòng execCommand khi Clipboard API không dùng được
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    ta.remove();
+    return ok;
+  }
+}
+
 function showQuery(q) {
   if (!q) { toast('Chưa có query nào được chạy', 'info'); return; }
   const shell = toShell(q);

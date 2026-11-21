@@ -28,6 +28,15 @@
       </form>
     </div>
 
+    <div id="noMatch" class="no-match" role="status" hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8.5 8.5l5 5M13.5 8.5l-5 5"/></svg>
+      <div class="flex-1 min-w-0">
+        <div class="font-semibold">Không có phim nào khớp bộ lọc</div>
+        <div class="text-sm muted mt-0.5" id="noMatchText"></div>
+      </div>
+      <button class="btn btn-sm" type="button" id="noMatchReset">Bỏ lọc</button>
+    </div>
+
     <section id="kpis" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" aria-label="Chỉ số tổng quan"></section>
 
     <div class="grid lg:grid-cols-3 gap-4">

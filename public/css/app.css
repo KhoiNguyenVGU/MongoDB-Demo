@@ -81,6 +81,16 @@ body {
 .card-sub { font-size: 12px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-top: 2px; }
 .card-status { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 14px; background: var(--panel); border-radius: 8px; }
 .card-status[hidden] { display: none; }
+/* Trạng thái rỗng (không có kết quả) */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 16px; max-width: 320px; }
+.empty-state svg { color: var(--muted); opacity: .7; margin-bottom: 2px; }
+.empty-state .empty-title { color: var(--text); font-weight: 600; font-size: 14px; }
+.empty-state .empty-hint { font-size: 12.5px; line-height: 1.5; }
+.no-match {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px;
+  background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--warn); box-shadow: var(--shadow);
+}
+.no-match > svg { color: var(--warn); flex-shrink: 0; }
 .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
 
 /* ---------- Controls ---------- */
@@ -196,6 +206,7 @@ button.chip:hover { border-color: var(--accent); }
 .tasks li::marker { color: var(--muted); }
 .ex-query .code { max-height: 360px; white-space: pre-wrap; word-break: break-word; }
 .stat { background: var(--panel-2); border-radius: 9px; padding: 8px 10px; min-width: 0; overflow-wrap: anywhere; }
+.btn.copied { color: var(--accent); border-color: var(--accent); }
 .chip-danger { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
 .tip { padding: 10px 12px; border-radius: 9px; background: var(--panel-2); border-left: 3px solid var(--warn); font-size: 13.5px; line-height: 1.5; }
 .tip code, .tasks code { font-size: 12.5px; }

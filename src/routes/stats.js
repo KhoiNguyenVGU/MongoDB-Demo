@@ -34,15 +34,23 @@ router.get('/overview', async (req, res) => {
     { $group: { _id: null, avgRating: { $avg: '$imdb.rating' }, rated: { $sum: 1 } } },
   ];
   const t = Date.now();
-  const [movies, comments, users, theaters, rating] = await Promise.all([
+  // Năm nhỏ nhất / lớn nhất trong dữ liệu (dùng index year) để gợi ý khi bộ lọc không khớp
+  const yearEdge = (dir) => db.collection('movies')
+    .find({ year: { $type: 'number' } }, { projection: { _id: 0, year: 1 } }).sort({ year: dir }).limit(1).next();
+  const [movies, comments, users, theaters, rating, minY, maxY] = await Promise.all([
     isEmpty(m) ? db.collection('movies').estimatedDocumentCount() : db.collection('movies').countDocuments(m),
     db.collection('comments').estimatedDocumentCount(),
     db.collection('users').estimatedDocumentCount(),
     db.collection('theaters').estimatedDocumentCount(),
     db.collection('movies').aggregate(pipeline).toArray(),
+    yearEdge(1),
+    yearEdge(-1),
   ]);
   res.json({
-    data: { movies, comments, users, theaters, avgRating: rating[0]?.avgRating ?? null, filtered: !isEmpty(m) },
+    data: {
+      movies, comments, users, theaters, avgRating: rating[0]?.avgRating ?? null, filtered: !isEmpty(m),
+      yearRange: { min: minY?.year ?? null, max: maxY?.year ?? null },
+    },
     query: describe('movies', 'aggregate', { pipeline }, t),
   });
 });

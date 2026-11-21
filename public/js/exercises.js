@@ -79,7 +79,8 @@ function queryBlock(q) {
     <div class="flex flex-col sm:flex-row sm:items-start gap-2">
       <pre class="code flex-1 min-w-0 text-xs" data-shell>${esc(shellFor(q))}</pre>
       <div class="flex sm:flex-col items-center sm:items-stretch gap-1.5 shrink-0 sm:w-28">
-        <button class="btn btn-sm btn-primary" data-run>▶ Chạy</button>${badge}
+        <button class="btn btn-sm btn-primary" data-run>▶ Chạy</button>
+        <button class="btn btn-sm" data-copy title="Copy lệnh để dán vào mongosh / Compass">Copy</button>${badge}
       </div>
     </div>
     ${q.note ? `<p class="text-xs muted mt-1.5">${esc(q.note)}</p>` : ''}
@@ -326,7 +327,18 @@ function renderExercises() {
   $$('#exToc [data-goto]').forEach((b) => { b.onclick = () => scrollToId(`ex-${b.dataset.goto}`); });
   renderSide();
   $('#exList').innerHTML = exercises.map(exerciseCard).join('');
-  $$('#exList [data-q]').forEach((el) => { $('[data-run]', el).onclick = () => runQuery(el.dataset.q, el); });
+  $$('#exList [data-q]').forEach((el) => {
+    $('[data-run]', el).onclick = () => runQuery(el.dataset.q, el);
+    const copyBtn = $('[data-copy]', el);
+    copyBtn.onclick = async () => {
+      // Lấy đúng lệnh đang hiển thị (đã thay tên database/collection nếu có)
+      const ok = await copyText($('[data-shell]', el).textContent);
+      copyBtn.textContent = ok ? '✓ Đã copy' : 'Lỗi copy';
+      copyBtn.classList.toggle('copied', ok);
+      clearTimeout(copyBtn._t);
+      copyBtn._t = setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1500);
+    };
+  });
   $$('#exList [data-part]').forEach((p) => {
     $('[data-reveal]', p).onclick = () => setReveal(p, $('[data-answers]', p).hidden);
   });

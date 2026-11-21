@@ -35,7 +35,26 @@ function filterQS() {
   return p.toString();
 }
 
-async function load(key, url, render) {
+// Mô tả bộ lọc đang áp dụng, vd. "thể loại Film-Noir, năm 2020–2025"
+function describeFilters() {
+  const g = $('#fGenre').value; const yf = $('#fFrom').value; const yt = $('#fTo').value;
+  const parts = [];
+  if (g) parts.push(`thể loại <b>${esc(g)}</b>`);
+  if (yf && yt) parts.push(`năm <b>${esc(yf)}–${esc(yt)}</b>`);
+  else if (yf) parts.push(`năm từ <b>${esc(yf)}</b> trở đi`);
+  else if (yt) parts.push(`năm đến <b>${esc(yt)}</b>`);
+  return parts.join(', ');
+}
+
+function emptyState(hint) {
+  return `<div class="empty-state">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <div class="empty-title">Không có kết quả phù hợp</div>
+    <div class="empty-hint">${hint || 'Không có phim nào khớp bộ lọc hiện tại. Thử chọn thể loại khác hoặc nới rộng khoảng năm.'}</div>
+  </div>`;
+}
+
+async function load(key, url, render, emptyHint) {
   const status = $(`[data-status="${key}"]`);
   if (status) { status.hidden = false; status.textContent = 'Đang tải…'; }
   try {
@@ -43,7 +62,10 @@ async function load(key, url, render) {
     setQuery(key, res.query);
     renders[key] = () => render(res);
     const empty = Array.isArray(res.data) && res.data.length === 0;
-    if (status) { status.hidden = !empty; status.textContent = 'Không có dữ liệu khớp bộ lọc'; }
+    if (status) {
+      status.hidden = !empty;
+      if (empty) status.innerHTML = emptyState(typeof emptyHint === 'function' ? emptyHint(res) : emptyHint);
+    }
     render(res);
   } catch (e) {
     if (status) { status.hidden = false; status.textContent = 'Lỗi: ' + e.message; }
@@ -60,7 +82,18 @@ function loadAll() {
   const sep = qs ? '?' + qs : '';
   $('#kpis').innerHTML = skeletonRows(5, 'h-[94px] rounded-2xl');
 
+  $('#noMatch').hidden = true;
   load('overview', '/api/stats/overview' + sep, ({ data: d }) => {
+    // Banner khi bộ lọc không khớp phim nào
+    const none = d.filtered && d.movies === 0;
+    $('#noMatch').hidden = !none;
+    if (none) {
+      const r = d.yearRange || {};
+      const yf = Number($('#fFrom').value); const yt = Number($('#fTo').value);
+      const outOfRange = r.min != null && ((yf && yf > r.max) || (yt && yt < r.min));
+      $('#noMatchText').innerHTML = `Không tìm thấy phim nào với ${describeFilters()}.`
+        + (r.min != null ? ` Dữ liệu chỉ có phim từ năm <b>${r.min}</b> đến <b>${r.max}</b>${outOfRange ? ', khoảng năm bạn chọn nằm ngoài phạm vi này' : ''}.` : '');
+    }
     $('#kpis').innerHTML =
       kpi('Movies', fmt(d.movies), d.filtered ? 'khớp bộ lọc' : 'tổng số document') +
       kpi('Comments', fmt(d.comments), 'tổng số') +
@@ -129,7 +162,7 @@ function loadAll() {
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ★ ${c.raw} · ${fmt(data[c.dataIndex].count)} phim` } } },
       },
     });
-  });
+  }, ({ minCount }) => `Không có thể loại nào có đủ ${minCount} phim (có điểm IMDb) trong bộ lọc này để tính trung bình.`);
 
   load('top', '/api/stats/top-commented' + sep, ({ data }) => {
     $('#topBody').innerHTML = data.map((m, i) => `
@@ -140,7 +173,7 @@ function loadAll() {
         <td class="num"><span class="rating">${typeof m.rating === 'number' ? '★ ' + m.rating : '—'}</span></td>
         <td class="num font-semibold">${fmt(m.comments)}</td>
       </tr>`).join('');
-  });
+  }, 'Không có phim nào trong bộ lọc này có bình luận.');
 
   load('states', '/api/stats/theaters-by-state', ({ data }) => {
     const t = theme();
@@ -161,6 +194,7 @@ $('#filters').addEventListener('submit', (e) => {
   loadAll();
 });
 $('#fReset').onclick = () => { $('#fGenre').value = ''; $('#fFrom').value = ''; $('#fTo').value = ''; loadAll(); };
+$('#noMatchReset').onclick = () => $('#fReset').click();
 
 api('/api/movies/genres').then(({ data }) => {
   $('#fGenre').insertAdjacentHTML('beforeend', data.map((g) => `<option>${esc(g)}</option>`).join(''));
