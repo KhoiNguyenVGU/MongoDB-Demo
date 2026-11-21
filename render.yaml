@@ -1,0 +1,25 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: mflix-mongodb-demo
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: MONGODB_DB
+        value: sample_mflix
+      # Secrets: Render asks for these values when you create the Blueprint (never commit them)
+      - key: MONGODB_URI
+        sync: false
+      # Optional: set to require a login (HTTP Basic Auth) before anyone can see or change data
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: DEMO_USER
+        value: demo

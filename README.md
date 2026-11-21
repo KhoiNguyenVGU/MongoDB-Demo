@@ -23,6 +23,19 @@ PORT=3000
 
 Nếu không kết nối được, kiểm tra **Network Access** trên Atlas: IP của máy bạn phải nằm trong whitelist.
 
+## Deploy lên Render
+
+Repo có sẵn [`render.yaml`](render.yaml) (Blueprint).
+
+1. **Atlas → Network Access → Add IP Address → `0.0.0.0/0`**. Gói free của Render không có IP cố định nên phải mở cho mọi IP. Vì vậy hãy dùng mật khẩu DB mạnh.
+2. **Render → New → Blueprint** → chọn repo này → Render tự đọc `render.yaml`.
+3. Nhập giá trị cho các biến secret:
+   - `MONGODB_URI`: connection string Atlas
+   - `DEMO_PASSWORD`: mật khẩu để vào web (user: `demo`). Để trống nếu muốn web công khai, nhưng khi đó ai có link cũng có thể sửa hoặc xóa dữ liệu.
+4. **Apply**. Sau khoảng 2–3 phút web chạy tại `https://<tên-service>.onrender.com`.
+
+Mỗi lần `git push` lên `main`, Render tự deploy lại. Gói free sẽ "ngủ" sau 15 phút không có truy cập; lần mở đầu tiên sau đó mất khoảng 30–50 giây để khởi động.
+
 ## Các trang
 
 | Trang | Nội dung |
