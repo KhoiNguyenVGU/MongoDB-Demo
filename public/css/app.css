@@ -206,6 +206,8 @@ button.chip:hover { border-color: var(--accent); }
 .tasks li::marker { color: var(--muted); }
 .ex-query .code { max-height: 360px; white-space: pre-wrap; word-break: break-word; }
 .stat { background: var(--panel-2); border-radius: 9px; padding: 8px 10px; min-width: 0; overflow-wrap: anywhere; }
+.cost-bar { height: 14px; border-radius: 7px; background: var(--panel-2); overflow: hidden; }
+.cost-bar span { display: block; height: 100%; border-radius: 7px; background: var(--accent); transition: width .4s; }
 .btn.copied { color: var(--accent); border-color: var(--accent); }
 .chip-danger { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
 .tip { padding: 10px 12px; border-radius: 9px; background: var(--panel-2); border-left: 3px solid var(--warn); font-size: 13.5px; line-height: 1.5; }

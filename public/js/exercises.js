@@ -157,8 +157,28 @@ function explainView(s) {
     ${compare}`;
 }
 
+function indexCostView(v) {
+  const maxMs = Math.max(...v.runs.map((x) => x.ms));
+  const last = v.runs[v.runs.length - 1];
+  const rows = v.runs.map((x) => `
+    <tr>
+      <td class="font-semibold whitespace-nowrap">${esc(x.label)}</td>
+      <td class="w-full min-w-[160px]"><div class="cost-bar"><span style="width:${Math.max(3, (x.ms / maxMs) * 100)}%"></span></div></td>
+      <td class="num whitespace-nowrap font-semibold">${fmt(x.ms)} ms</td>
+      <td class="num whitespace-nowrap muted">${fmt(x.docsPerSec)} docs/s</td>
+    </tr>`).join('');
+  return `
+    <div class="overflow-x-auto"><table class="table">
+      <thead><tr><th>Cấu hình</th><th>Thời gian insert ${fmt(v.docs)} documents</th><th class="num">Tổng</th><th class="num">Tốc độ</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="text-sm mt-2">Với <b>${last.indexes} index</b>, insert chậm hơn khoảng <b>${fmt(last.slowdown, 1)}×</b> so với không có index. Mỗi document mới phải được ghi vào collection <b>và</b> vào từng index. Index chỉ đáng giá khi có nhiều đọc hơn ghi.</p>
+    <p class="text-xs muted mt-1">Mỗi cấu hình chạy ${v.rounds} lần, lấy lần nhanh nhất; insert theo lô ${fmt(v.batch)}. Cluster Atlas miễn phí dùng chung nên con số chỉ mang tính tương đối: chạy lại có thể lệch, nhưng càng nhiều index thì càng chậm.</p>`;
+}
+
 function resultView(r) {
   const meta = (extra = '') => `<div class="text-xs muted mt-3 mb-1.5">Kết quả · ${fmt(r.ms)} ms${extra ? ' · ' + extra : ''}</div>`;
+  if (r.kind === 'indexcost') return meta('đã tự xóa database tạm') + indexCostView(r.value);
   if (r.kind === 'explain') {
     const html = meta('explain("executionStats")') + explainView(r.value.summary) +
       `<details class="mt-2"><summary class="text-xs muted cursor-pointer">Xem executionStats đầy đủ</summary><pre class="code text-xs mt-2">${esc(prettyResult(r.value.executionStats))}</pre></details>`;

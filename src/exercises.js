@@ -2,6 +2,7 @@
 // Mỗi query có: shell (hiển thị đúng như tài liệu) + run (code driver tương đương, chạy trên Atlas).
 // Chỉ các query định nghĩa ở đây mới chạy được: client không gửi query tùy ý.
 const { summarize } = require('./utils/explain');
+const { runIndexCost } = require('./indexCost');
 
 // Bài 3 chạy trên database/collection do người dùng chọn (mặc định movie_demo.watchlist như tài liệu)
 const wl = (ctx) => ctx.target.collection;
@@ -349,6 +350,37 @@ const EXERCISES = [
             id: '7-get-2',
             shell: 'db.movies.getIndexes()',
             run: (ctx) => movies(ctx).indexes(),
+          },
+        ],
+      },
+      {
+        name: 'Cost of indexes on writes',
+        tasks: [
+          'Indexes make reads faster, but every insert must also update every index. Insert the same 20,000 documents into collections with 0, 3 and 5 indexes and compare the insert time',
+        ],
+        queries: [
+          {
+            id: '7-index-cost',
+            write: true,
+            shell: [
+              '// Chạy trong mongosh / Compass để tự đo (zz_index_demo là database tạm)',
+              'use zz_index_demo',
+              'db.with_indexes.createIndex({ qty: 1 })',
+              'db.with_indexes.createIndex({ category: 1, price: -1 })',
+              'db.with_indexes.createIndex({ createdAt: -1 })',
+              'db.with_indexes.createIndex({ name: 1 })',
+              'db.with_indexes.createIndex({ tags: 1 })',
+              '',
+              'let docs = []',
+              'for (let i = 0; i < 20000; i++) docs.push({ name: "item-" + i, qty: i % 500, price: i / 10,',
+              '  category: "Drama", createdAt: new Date(), tags: ["new", "hit"] })',
+              '',
+              'let t = Date.now(); db.no_index.insertMany(docs); print("no index:", Date.now() - t, "ms")',
+              't = Date.now(); db.with_indexes.insertMany(docs); print("5 indexes:", Date.now() - t, "ms")',
+              'db.dropDatabase()',
+            ].join('\n'),
+            note: 'Nút Chạy làm tương tự trên server với 0/3/5 index (mỗi cấu hình chạy 2 lần, lấy lần nhanh nhất). Dùng database tạm zz_index_demo và tự xóa sau khi đo, không đụng dữ liệu của bạn. Mất khoảng 15 đến 40 giây.',
+            run: () => runIndexCost(),
           },
         ],
       },
