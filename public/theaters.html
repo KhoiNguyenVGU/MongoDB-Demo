@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Theaters · MFlix MongoDB Demo</title>
+  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="min-h-screen">
+  <div id="nav"></div>
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="page-title">Theaters</h1>
+        <p class="muted text-sm mt-1">Collection <code>theaters</code>: tọa độ GeoJSON Point, index <code>2dsphere</code>, tìm rạp gần bằng <code>$geoNear</code></p>
+      </div>
+      <button class="btn btn-primary" id="addBtn">+ Thêm rạp</button>
+    </div>
+
+    <div class="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-5 items-start">
+      <section class="space-y-3 order-2 lg:order-1" aria-label="Danh sách rạp">
+        <div class="card p-3 flex flex-wrap gap-2 items-end" id="listFilters">
+          <label class="flex-1 min-w-[160px]"><span class="label">Tìm theo thành phố, địa chỉ, zip, ID</span><input id="q" type="search" class="input" placeholder="vd. New York, 10012"></label>
+          <label class="w-28"><span class="label">Bang</span><select id="state" class="input"><option value="">Tất cả</option></select></label>
+          <button class="btn btn-sm btn-query" data-query="list">{ }</button>
+        </div>
+        <div id="nearHeader" class="card p-3 flex flex-wrap items-center justify-between gap-2" hidden></div>
+        <div id="list" class="space-y-2"></div>
+        <div id="pager" class="flex flex-wrap items-center justify-between gap-3"></div>
+      </section>
+
+      <section class="space-y-3 order-1 lg:order-2 lg:sticky lg:top-20" aria-label="Bản đồ">
+        <div class="card p-2"><div id="map" class="h-[340px] sm:h-[460px]"></div></div>
+        <form id="nearForm" class="card p-3 flex flex-wrap gap-2 items-end" novalidate>
+          <label class="w-28"><span class="label">Vĩ độ (lat)</span><input name="lat" type="number" step="any" class="input" value="40.7128"></label>
+          <label class="w-28"><span class="label">Kinh độ (lng)</span><input name="lng" type="number" step="any" class="input" value="-74.0060"></label>
+          <label class="w-24"><span class="label">Bán kính km</span><input name="km" type="number" min="0.1" max="1000" step="any" class="input" value="10"></label>
+          <button class="btn btn-primary" type="submit">Tìm rạp gần</button>
+          <button class="btn" type="button" id="geoBtn">Vị trí của tôi</button>
+          <button class="btn btn-sm btn-query" type="button" data-query="near">{ }</button>
+          <p class="w-full text-xs muted">Mẹo: bấm lên bản đồ để chọn điểm và tìm luôn. Dữ liệu rạp chỉ có ở Mỹ.</p>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/theaters.js"></script>
+</body>
+</html>

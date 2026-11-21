@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Query Explorer · MFlix MongoDB Demo</title>
+  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="min-h-screen">
+  <div id="nav"></div>
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-8">
+    <div>
+      <h1 class="page-title">Query Explorer</h1>
+      <p class="muted text-sm mt-1">So sánh execution plan khi có index và khi ép <code>COLLSCAN</code> bằng <code>hint({ $natural: 1 })</code>, dùng <code>explain("executionStats")</code></p>
+    </div>
+
+    <section class="space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold">1. Index vs Collection scan</h2>
+        <button class="btn btn-primary" id="runAll">Chạy tất cả</button>
+      </div>
+      <div id="samples" class="space-y-3"></div>
+    </section>
+
+    <section class="space-y-3">
+      <h2 class="text-lg font-semibold">2. Chạy thử find() của bạn <span class="text-sm font-normal muted">(chỉ đọc · tối đa 50 docs · Extended JSON)</span></h2>
+      <form id="custom" class="card p-4 grid md:grid-cols-[180px_1fr_1fr_100px] gap-3 items-end" novalidate>
+        <label><span class="label">Collection</span>
+          <select name="collection" class="input"><option>movies</option><option>comments</option><option>users</option><option>theaters</option></select></label>
+        <label><span class="label">Filter</span><textarea name="filter" class="input font-mono text-xs" rows="3" spellcheck="false">{ "year": 2015, "imdb.rating": { "$gte": 8 } }</textarea></label>
+        <label><span class="label">Sort</span><textarea name="sort" class="input font-mono text-xs" rows="3" spellcheck="false">{ "imdb.rating": -1 }</textarea></label>
+        <label><span class="label">Limit</span><input name="limit" type="number" min="1" max="50" value="10" class="input"></label>
+        <div class="md:col-span-4 flex flex-wrap gap-2 items-center">
+          <button class="btn btn-primary" type="submit">Chạy query</button>
+          <span class="text-xs muted">Ví dụ: <button type="button" class="chip" data-ex='{"c":"movies","f":"{ \"cast\": \"Tom Hanks\" }","s":"{ \"year\": -1 }"}'>cast = Tom Hanks</button>
+            <button type="button" class="chip" data-ex='{"c":"movies","f":"{ \"$text\": { \"$search\": \"space alien\" } }","s":""}'>$text search</button>
+            <button type="button" class="chip" data-ex='{"c":"theaters","f":"{ \"location.address.state\": \"CA\", \"location.address.city\": \"San Diego\" }","s":""}'>Rạp ở San Diego</button>
+            <button type="button" class="chip" data-ex='{"c":"comments","f":"{ \"email\": \"mercedes_tyler@fakegmail.com\" }","s":"{ \"date\": -1 }"}'>comments theo email</button></span>
+        </div>
+      </form>
+      <div id="customOut"></div>
+    </section>
+  </main>
+  <script src="/js/common.js"></script>
+  <script src="/js/explorer.js"></script>
+</body>
+</html>

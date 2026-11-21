@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Movies · MFlix MongoDB Demo</title>
+  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="min-h-screen">
+  <div id="nav"></div>
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="page-title">Movies</h1>
+        <p class="muted text-sm mt-1">Collection <code>sample_mflix.movies</code>: tìm kiếm bằng <code>$text</code>, lọc, sort và phân trang ở server</p>
+      </div>
+      <button class="btn btn-primary" id="addBtn">+ Thêm phim</button>
+    </div>
+
+    <section class="card p-4 space-y-4" aria-label="Bộ lọc">
+      <div class="flex flex-wrap gap-3 items-end">
+        <label class="flex-1 min-w-[220px]"><span class="label">Tìm kiếm (full-text: title, cast, genres, plot)</span>
+          <input id="q" type="search" class="input" placeholder="vd. batman, tom hanks, space…"></label>
+        <label class="w-24"><span class="label">Từ năm</span><input id="yearFrom" type="number" min="1880" max="2030" class="input"></label>
+        <label class="w-24"><span class="label">Đến năm</span><input id="yearTo" type="number" min="1880" max="2030" class="input"></label>
+        <label class="w-32"><span class="label">IMDb tối thiểu</span>
+          <select id="minRating" class="input"><option value="">Bất kỳ</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+        <label class="w-32"><span class="label">Loại</span>
+          <select id="type" class="input"><option value="">Tất cả</option><option value="movie">movie</option><option value="series">series</option></select></label>
+        <label class="w-48"><span class="label">Sắp xếp</span>
+          <select id="sort" class="input">
+            <option value="">Mặc định</option>
+            <option value="relevance">Liên quan nhất (textScore)</option>
+            <option value="year_desc">Mới nhất</option>
+            <option value="year_asc">Cũ nhất</option>
+            <option value="rating_desc">IMDb cao nhất</option>
+            <option value="comments_desc">Nhiều comment nhất</option>
+            <option value="title_asc">Tên A → Z</option>
+          </select></label>
+        <button class="btn" id="resetBtn" type="button">Bỏ lọc</button>
+      </div>
+      <div>
+        <span class="label">Thể loại (chọn nhiều, khớp bất kỳ, dùng $in)</span>
+        <div id="genres" class="flex flex-wrap gap-1.5"><span class="muted text-sm">Đang tải…</span></div>
+      </div>
+    </section>
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div id="pagerTop" class="flex flex-wrap items-center justify-between gap-3 flex-1"></div>
+      <button class="btn btn-sm btn-query" data-query="list">{ }</button>
+    </div>
+    <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+    <div id="pager" class="flex flex-wrap items-center justify-between gap-3"></div>
+  </main>
+
+  <script src="/js/common.js"></script>
+  <script src="/js/movie-form.js"></script>
+  <script src="/js/movies.js"></script>
+</body>
+</html>

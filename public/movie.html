@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chi tiết phim · MFlix MongoDB Demo</title>
+  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="min-h-screen">
+  <div id="nav"></div>
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <a href="/movies" class="text-sm muted hover:underline" id="backLink">← Danh sách phim</a>
+    <div id="detail">
+      <div class="grid md:grid-cols-[260px_1fr] gap-6">
+        <div class="skeleton aspect-[2/3] rounded-2xl"></div>
+        <div class="space-y-3"><div class="skeleton h-6"></div><div class="skeleton h-10 w-2/3"></div><div class="skeleton h-40"></div></div>
+      </div>
+    </div>
+
+    <section class="card p-5" id="commentsSection" hidden>
+      <div class="card-head">
+        <div>
+          <h2 class="card-title text-lg">Bình luận <span id="cCount" class="muted font-normal"></span></h2>
+          <p class="card-sub">comments.find({ movie_id }).sort({ date: -1 }), dùng index { movie_id: 1, date: -1 }</p>
+        </div>
+        <button class="btn btn-sm btn-query" data-query="comments">{ }</button>
+      </div>
+
+      <form id="cForm" class="grid sm:grid-cols-2 gap-3 mb-5 p-4 rounded-xl" style="background:var(--panel-2)" novalidate>
+        <label><span class="label">Tên *</span><input name="name" class="input" maxlength="100" required></label>
+        <label><span class="label">Email *</span><input name="email" type="email" class="input" maxlength="200" required></label>
+        <label class="sm:col-span-2"><span class="label">Nội dung *</span><textarea name="text" class="input" rows="2" maxlength="2000" required></textarea></label>
+        <div class="sm:col-span-2 flex items-center justify-between gap-3">
+          <span class="text-xs muted">Thêm comment = insertOne + $inc num_mflix_comments, chạy trong 1 transaction</span>
+          <button class="btn btn-primary" type="submit">Gửi bình luận</button>
+        </div>
+      </form>
+
+      <div id="cList" class="space-y-3"></div>
+      <div id="cPager" class="flex flex-wrap items-center justify-between gap-3 mt-4"></div>
+    </section>
+  </main>
+
+  <script src="/js/common.js"></script>
+  <script src="/js/movie-form.js"></script>
+  <script src="/js/movie.js"></script>
+</body>
+</html>

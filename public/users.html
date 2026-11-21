@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Users · MFlix MongoDB Demo</title>
+  <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="min-h-screen">
+  <div id="nav"></div>
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+    <div class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="page-title">Users</h1>
+        <p class="muted text-sm mt-1">Collection <code>users</code>: password hash bằng bcrypt và luôn bị loại khỏi kết quả (<code>projection: { password: 0 }</code>)</p>
+      </div>
+      <button class="btn btn-primary" id="addBtn">+ Thêm user</button>
+    </div>
+    <div class="card p-3 flex flex-wrap gap-2 items-end">
+      <label class="flex-1 min-w-[200px]"><span class="label">Tìm theo tên hoặc email (regex, không phân biệt hoa thường)</span>
+        <input id="q" type="search" class="input" placeholder="vd. stark, @gameofthron.es"></label>
+      <button class="btn btn-sm btn-query" data-query="list">{ }</button>
+    </div>
+    <div class="card overflow-x-auto">
+      <table class="table">
+        <thead><tr><th>Tên</th><th>Email</th><th class="hidden md:table-cell">_id</th><th class="num">Thao tác</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div id="pager" class="flex flex-wrap items-center justify-between gap-3"></div>
+  </main>
+  <script src="/js/common.js"></script>
+  <script src="/js/users.js"></script>
+</body>
+</html>
