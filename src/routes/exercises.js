@@ -4,6 +4,7 @@ const { BSON } = require('mongodb');
 const db = require('../db');
 const { notFound, userDbName, collName } = require('../utils/validate');
 const { QUERY_BY_ID, publicExercises } = require('../exercises');
+const { requireAdmin } = require('../utils/role');
 
 const toEJSON = (v) => BSON.EJSON.serialize({ v }, { relaxed: true }).v;
 const DEFAULT_DB = 'movie_demo';
@@ -35,6 +36,7 @@ router.get('/state', async (req, res) => {
 router.post('/run/:id', async (req, res) => {
   const q = QUERY_BY_ID.get(req.params.id);
   if (!q) throw notFound('Không có query này trong bài tập');
+  if (q.write) requireAdmin(req); // User chỉ được chạy các query đọc
   const ctx = { mflix: db.mflix, demo: db.demo };
   if (q.configurable) ctx.target = exerciseTarget(req.body || {});
   const t = Date.now();

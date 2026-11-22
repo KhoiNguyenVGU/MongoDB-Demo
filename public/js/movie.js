@@ -19,7 +19,7 @@ function renderMovie(m) {
   <div class="grid md:grid-cols-[260px_1fr] gap-6">
     <div class="space-y-3">
       <div class="poster rounded-2xl card">${posterImg(m.poster, m.title)}</div>
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-2 admin-only">
         <button class="btn" id="editBtn">Sửa</button>
         <button class="btn btn-danger" id="delBtn">Xóa</button>
       </div>
@@ -73,8 +73,8 @@ function commentItem(c) {
       <div><span class="font-semibold">${esc(c.name)}</span> <span class="text-xs muted">${esc(c.email)}</span>
         <div class="text-xs muted">${fmtDate(c.date)}</div></div>
       <div class="flex gap-1">
-        <button class="btn btn-sm" data-edit>Sửa</button>
-        <button class="btn btn-sm btn-danger" data-del>Xóa</button>
+        <button class="btn btn-sm admin-only" data-edit>Sửa</button>
+        <button class="btn btn-sm btn-danger admin-only" data-del>Xóa</button>
       </div>
     </div>
     <p class="mt-2 text-sm leading-relaxed whitespace-pre-line" data-text>${esc(c.text)}</p>
@@ -87,7 +87,7 @@ async function loadComments() {
     const res = await api(`/api/movies/${movieId}/comments?page=${cPage}&limit=10`);
     setQuery('comments', res.query);
     $('#cCount').textContent = `(${fmt(res.total)})`;
-    $('#cList').innerHTML = res.data.length ? res.data.map(commentItem).join('') : '<p class="muted text-sm">Chưa có bình luận nào. Hãy là người đầu tiên.</p>';
+    $('#cList').innerHTML = res.data.length ? res.data.map(commentItem).join('') : `<p class="muted text-sm">Chưa có bình luận nào.${IS_ADMIN ? ' Hãy là người đầu tiên.' : ''}</p>`;
     renderPagination($('#cPager'), res, (p) => { cPage = p; loadComments(); });
     bindComments(res.data);
   } catch (e) { $('#cList').innerHTML = errorBox(e.message); }

@@ -56,7 +56,9 @@ async function loadDbs() {
 
 function renderDbs() {
   if (!dbs.length) {
-    $('#dbList').innerHTML = '<p class="text-sm muted px-2 py-3">Chưa có database nào. Bấm <b>+ Database mới</b> hoặc chạy Exercise 3 trong Query Explorer.</p>';
+    $('#dbList').innerHTML = IS_ADMIN
+      ? '<p class="text-sm muted px-2 py-3">Chưa có database nào. Bấm <b>+ Database mới</b> hoặc chạy Exercise 3 trong Query Explorer.</p>'
+      : '<p class="text-sm muted px-2 py-3">Chưa có database nào.</p>';
     return;
   }
   $('#dbList').innerHTML = dbs.map((d) => `
@@ -65,8 +67,8 @@ function renderDbs() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="muted shrink-0" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
         <span class="font-semibold text-sm flex-1 truncate ml-1" title="${esc(d.name)}">${esc(d.name)}</span>
         <span class="text-xs muted tabular">${fmtSize(d.sizeOnDisk)}</span>
-        <button class="btn btn-sm btn-ghost" data-add-coll title="Thêm collection" aria-label="Thêm collection vào ${esc(d.name)}">+</button>
-        <button class="btn btn-sm btn-ghost btn-danger" data-drop-db title="Drop database" aria-label="Drop database ${esc(d.name)}">✕</button>
+        <button class="btn btn-sm btn-ghost admin-only" data-add-coll title="Thêm collection" aria-label="Thêm collection vào ${esc(d.name)}">+</button>
+        <button class="btn btn-sm btn-ghost btn-danger admin-only" data-drop-db title="Drop database" aria-label="Drop database ${esc(d.name)}">✕</button>
       </div>
       ${d.collections.map((c) => `
         <button class="coll-btn ${d.name === sel.db && c.name === sel.coll ? 'active' : ''}" data-coll="${esc(c.name)}" ${d.name === sel.db && c.name === sel.coll ? 'aria-current="true"' : ''}>
@@ -86,7 +88,7 @@ function renderDbs() {
 /* ---------- Panel chính: documents ---------- */
 function renderMain() {
   if (!sel.db || !sel.coll) {
-    $('#main').innerHTML = emptyBox(dbs.length ? 'Chọn một collection ở bên trái.' : 'Tạo database đầu tiên để bắt đầu.');
+    $('#main').innerHTML = emptyBox(dbs.length ? 'Chọn một collection ở bên trái.' : IS_ADMIN ? 'Tạo database đầu tiên để bắt đầu.' : 'Chưa có dữ liệu để xem.');
     return;
   }
   $('#main').innerHTML = `
@@ -96,8 +98,8 @@ function renderMain() {
         <h2 class="text-xl font-bold truncate">${esc(sel.coll)}</h2>
       </div>
       <button class="btn btn-sm btn-query" data-query="docs">{ }</button>
-      <button class="btn btn-danger" id="dropCollBtn">Drop collection</button>
-      <button class="btn btn-primary" id="addDocBtn">+ Thêm document</button>
+      <button class="btn btn-danger admin-only" id="dropCollBtn">Drop collection</button>
+      <button class="btn btn-primary admin-only" id="addDocBtn">+ Thêm document</button>
     </div>
     <form id="filterForm" class="card p-3 grid sm:grid-cols-[1fr_1fr_auto_auto] gap-2 items-end" novalidate>
       <label><span class="label">Filter</span><input name="filter" class="input font-mono text-xs" placeholder='{ "watched": false }' value="${esc(view.filter)}" spellcheck="false"></label>
@@ -143,13 +145,13 @@ async function loadDocs() {
           <div class="flex items-center justify-between gap-2 mb-2">
             <span class="text-xs muted font-mono truncate">_id: ${esc(mongoish(JSON.stringify(d._id)))}</span>
             <div class="flex gap-1 shrink-0">
-              <button class="btn btn-sm" data-edit>Sửa</button>
-              <button class="btn btn-sm btn-danger" data-del>Xóa</button>
+              <button class="btn btn-sm admin-only" data-edit>Sửa</button>
+              <button class="btn btn-sm btn-danger admin-only" data-del>Xóa</button>
             </div>
           </div>
           <pre class="code text-xs">${esc(prettyResult(withoutId(d)))}</pre>
         </article>`).join('')
-      : emptyBox(view.filter ? 'Không có document nào khớp filter.' : 'Collection đang trống. Bấm "+ Thêm document".');
+      : emptyBox(view.filter ? 'Không có document nào khớp filter.' : IS_ADMIN ? 'Collection đang trống. Bấm "+ Thêm document".' : 'Collection đang trống.');
     $$('#docList [data-i]').forEach((el) => {
       const d = docs[Number(el.dataset.i)];
       $('[data-edit]', el).onclick = () => openDocEditor(d);

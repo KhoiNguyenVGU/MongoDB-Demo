@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Movies · MFlix MongoDB Demo</title>
   <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script>document.documentElement.dataset.role=(document.cookie.match(/(?:^|; )role=(admin|user)/)||[])[1]||''</script>
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <link rel="stylesheet" href="/css/app.css">
@@ -17,7 +18,7 @@
         <h1 class="page-title">Movies</h1>
         <p class="muted text-sm mt-1">Collection <code>sample_mflix.movies</code>: tìm kiếm bằng <code>$text</code>, lọc, sort và phân trang ở server</p>
       </div>
-      <button class="btn btn-primary" id="addBtn">+ Thêm phim</button>
+      <button class="btn btn-primary admin-only" id="addBtn">+ Thêm phim</button>
     </div>
 
     <section class="card p-4 space-y-4" aria-label="Bộ lọc">

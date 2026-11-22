@@ -42,8 +42,8 @@ function item(t) {
       ${t.distance != null ? `<div class="text-xs accent font-semibold mt-0.5">cách ${fmtKm(t.distance)}</div>` : ''}
     </button>
     <div class="flex gap-1 shrink-0">
-      <button class="btn btn-sm" data-edit>Sửa</button>
-      <button class="btn btn-sm btn-danger" data-del>Xóa</button>
+      <button class="btn btn-sm admin-only" data-edit>Sửa</button>
+      <button class="btn btn-sm btn-danger admin-only" data-del>Xóa</button>
     </div>
   </div>`;
 }

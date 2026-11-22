@@ -15,9 +15,9 @@ async function load() {
         <td class="font-medium">${esc(u.name)}</td>
         <td class="muted">${esc(u.email)}</td>
         <td class="hidden md:table-cell text-xs muted font-mono">${esc(u._id)}</td>
-        <td class="num whitespace-nowrap">
-          <button class="btn btn-sm" data-edit>Sửa</button>
-          <button class="btn btn-sm btn-danger" data-del>Xóa</button>
+        <td class="num whitespace-nowrap admin-only">
+          <button class="btn btn-sm admin-only" data-edit>Sửa</button>
+          <button class="btn btn-sm btn-danger admin-only" data-del>Xóa</button>
         </td>
       </tr>`).join('') : '<tr><td colspan="4" class="text-center muted py-8">Không tìm thấy user nào.</td></tr>';
     for (const u of res.data) {

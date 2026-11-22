@@ -2,7 +2,7 @@
 
 /* ---------- Tabs ---------- */
 function setTab(name) {
-  if (!$(`[data-panel="${name}"]`)) name = 'exercises';
+  if (!$(`[data-panel="${name}"]`) || (name === 'shell' && !IS_ADMIN)) name = 'exercises'; // Shell chỉ dành cho Admin
   $$('[data-tab]').forEach((b) => {
     const on = b.dataset.tab === name;
     b.classList.toggle('active', on);
@@ -73,13 +73,16 @@ const queryById = new Map();
 let prevExplain = null; // so sánh 2 lần explain của Bài 7
 
 function queryBlock(q) {
-  const badge = q.write ? `<span class="chip text-xs ${q.danger ? 'chip-danger' : ''}">${q.danger ? 'xóa dữ liệu' : 'ghi dữ liệu'}</span>` : '';
+  const badge = q.write
+    ? `<span class="chip text-xs admin-only ${q.danger ? 'chip-danger' : ''}">${q.danger ? 'xóa dữ liệu' : 'ghi dữ liệu'}</span>`
+      + '<span class="chip text-xs user-only" title="Lệnh ghi/xóa dữ liệu: chỉ Admin được chạy">chỉ Admin chạy</span>'
+    : '';
   return `
   <div class="ex-query" data-q="${esc(q.id)}">
     <div class="flex flex-col sm:flex-row sm:items-start gap-2">
       <pre class="code flex-1 min-w-0 text-xs" data-shell>${esc(shellFor(q))}</pre>
       <div class="flex sm:flex-col items-center sm:items-stretch gap-1.5 shrink-0 sm:w-28">
-        <button class="btn btn-sm btn-primary" data-run>▶ Chạy</button>
+        <button class="btn btn-sm btn-primary${q.write ? ' admin-only' : ''}" data-run>▶ Chạy</button>
         <button class="btn btn-sm" data-copy title="Copy lệnh để dán vào mongosh / Compass">Copy</button>${badge}
       </div>
     </div>
@@ -105,7 +108,7 @@ function partBlock(p, ex) {
 
 function targetForm() {
   return `
-  <form class="ex-target mt-3" data-target-form novalidate>
+  <form class="ex-target mt-3 admin-only" data-target-form novalidate>
     <label class="w-44"><span class="label">Database</span><input name="db" class="input font-mono text-sm" value="${esc(exTarget.db)}" spellcheck="false"></label>
     <label class="w-44"><span class="label">Collection</span><input name="collection" class="input font-mono text-sm" value="${esc(exTarget.collection)}" spellcheck="false"></label>
     <button class="btn btn-sm btn-primary" type="submit">Áp dụng</button>

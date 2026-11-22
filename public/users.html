@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Users · MFlix MongoDB Demo</title>
   <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script>document.documentElement.dataset.role=(document.cookie.match(/(?:^|; )role=(admin|user)/)||[])[1]||''</script>
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <link rel="stylesheet" href="/css/app.css">
@@ -17,7 +18,7 @@
         <h1 class="page-title">Users</h1>
         <p class="muted text-sm mt-1">Collection <code>users</code>: password hash bằng bcrypt và luôn bị loại khỏi kết quả (<code>projection: { password: 0 }</code>)</p>
       </div>
-      <button class="btn btn-primary" id="addBtn">+ Thêm user</button>
+      <button class="btn btn-primary admin-only" id="addBtn">+ Thêm user</button>
     </div>
     <div class="card p-3 flex flex-wrap gap-2 items-end">
       <label class="flex-1 min-w-[200px]"><span class="label">Tìm theo tên hoặc email (regex, không phân biệt hoa thường)</span>
@@ -26,7 +27,7 @@
     </div>
     <div class="card overflow-x-auto">
       <table class="table">
-        <thead><tr><th>Tên</th><th>Email</th><th class="hidden md:table-cell">_id</th><th class="num">Thao tác</th></tr></thead>
+        <thead><tr><th>Tên</th><th>Email</th><th class="hidden md:table-cell">_id</th><th class="num admin-only">Thao tác</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard · MFlix MongoDB Demo</title>
   <script>try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}</script>
+  <script>document.documentElement.dataset.role=(document.cookie.match(/(?:^|; )role=(admin|user)/)||[])[1]||''</script>
   <script src="https://cdn.tailwindcss.com/3.4.16"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <link rel="stylesheet" href="/css/app.css">

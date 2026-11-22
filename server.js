@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
 const db = require('./src/db');
+const { ROLES, getRole, viewerGuard } = require('./src/utils/role');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -30,6 +31,17 @@ if (process.env.DEMO_PASSWORD) {
 }
 
 app.use(express.json({ limit: '100kb' }));
+
+// ---------- Vai trò: admin (toàn quyền) / user (chỉ xem) ----------
+app.get('/api/role', (req, res) => res.json({ role: getRole(req) }));
+app.post('/api/role', (req, res) => {
+  const role = req.body && req.body.role;
+  if (!ROLES.includes(role)) return res.status(400).json({ error: 'Vai trò phải là "admin" hoặc "user"' });
+  // Cookie phiên (hết hạn khi đóng trình duyệt) để lần mở sau hỏi lại. Không HttpOnly vì giao diện cần đọc để ẩn nút.
+  res.cookie('role', role, { sameSite: 'lax', secure: req.secure, path: '/' });
+  res.json({ role });
+});
+app.use('/api', viewerGuard);
 
 // ---------- API ----------
 app.get('/api/health', async (req, res) => {

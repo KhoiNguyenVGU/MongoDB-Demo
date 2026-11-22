@@ -1,5 +1,9 @@
 /* Helpers dùng chung cho mọi trang: API, navbar, toast, modal, query viewer, pagination, tag input */
 
+// Vai trò hiện tại (đọc từ cookie do server đặt). Server vẫn kiểm tra quyền ở mọi API ghi.
+const ROLE = (document.cookie.match(/(?:^|; )role=(admin|user)/) || [])[1] || '';
+const IS_ADMIN = ROLE === 'admin';
+
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const QUERIES = {}; // key -> query object trả về từ API (cho nút "Query")
@@ -54,6 +58,7 @@ function renderNav() {
       <nav class="hidden lg:flex gap-1 ml-3" aria-label="Chính">${links}</nav>
       <div class="ml-auto flex items-center gap-2">
         <span class="hidden sm:flex items-center gap-2 text-xs muted" id="dbStatus" title="Trạng thái kết nối MongoDB Atlas"><span class="status-dot"></span>Atlas</span>
+        <button class="btn btn-sm" id="roleBtn" title="Đổi vai trò" aria-label="Đổi vai trò"></button>
         <button class="btn btn-sm btn-ghost" id="themeBtn" aria-label="Đổi giao diện sáng/tối"></button>
         <button class="btn btn-sm lg:hidden" id="menuBtn" aria-label="Mở menu" aria-expanded="false">☰</button>
       </div>
@@ -70,6 +75,9 @@ function renderNav() {
     paint();
     window.dispatchEvent(new Event('themechange'));
   };
+  const roleBtn = $('#roleBtn');
+  roleBtn.textContent = ROLE === 'admin' ? 'Admin ▾' : ROLE === 'user' ? 'User ▾' : 'Chọn vai trò';
+  roleBtn.onclick = () => chooseRole({ cancellable: !!ROLE });
   $('#menuBtn').onclick = (e) => {
     const open = $('#mobileNav').classList.toggle('hidden') === false;
     e.currentTarget.setAttribute('aria-expanded', String(open));
@@ -308,5 +316,69 @@ const errorBox = (msg) => `<div class="form-error">Không tải được dữ li
 const emptyBox = (msg) => `<div class="card p-10 text-center muted">${esc(msg)}</div>`;
 const posterImg = (src, alt) => `<img src="${esc(src || POSTER_FALLBACK)}" alt="${esc(alt)}" loading="lazy" onerror="this.onerror=null;this.src=POSTER_FALLBACK">`;
 
+/* ---------- Chọn vai trò (admin / user) ---------- */
+function chooseRole({ cancellable = false } = {}) {
+  if ($('#roleOverlay')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'roleOverlay';
+  wrap.className = 'role-overlay';
+  wrap.innerHTML = `
+    <div class="role-dialog card" role="dialog" aria-modal="true" aria-labelledby="roleTitle" aria-describedby="roleDesc">
+      <h2 id="roleTitle" class="text-xl font-bold">${cancellable ? 'Đổi vai trò' : 'Chào mừng đến MFlix Demo'}</h2>
+      <p id="roleDesc" class="muted text-sm mt-1">Chọn vai trò để bắt đầu. Bạn có thể đổi lại bất cứ lúc nào ở góc trên bên phải.</p>
+      <div class="role-options">
+        <button type="button" class="role-opt" data-role="admin">
+          <span class="role-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <b>Admin</b>
+          <span class="desc">Toàn quyền: thêm, sửa, xóa dữ liệu, dùng Mongo Shell và chạy mọi bài tập.</span>
+        </button>
+        <button type="button" class="role-opt" data-role="user">
+          <span class="role-ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+          <b>User</b>
+          <span class="desc">Chỉ xem: dashboard, danh sách, nội dung bài tập. Không thêm/sửa/xóa, không viết code.</span>
+        </button>
+      </div>
+      <div class="form-error mt-3" data-err hidden></div>
+      ${cancellable ? '<div class="mt-4 text-right"><button type="button" class="btn btn-sm" data-cancel>Hủy</button></div>' : ''}
+    </div>`;
+  const prevFocus = document.activeElement;
+  const prevOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+  const close = () => {
+    wrap.remove();
+    document.removeEventListener('keydown', onKey);
+    document.body.style.overflow = prevOverflow;
+    prevFocus?.focus?.();
+  };
+  const onKey = (e) => {
+    if (e.key === 'Escape' && cancellable) { close(); return; }
+    if (e.key === 'Tab') { // giữ focus trong hộp thoại
+      const items = $$('button', wrap);
+      const first = items[0]; const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  };
+  document.addEventListener('keydown', onKey);
+  $$('[data-role]', wrap).forEach((b) => {
+    b.onclick = async () => {
+      $$('[data-role]', wrap).forEach((x) => { x.disabled = true; });
+      try {
+        await api('/api/role', { method: 'POST', body: { role: b.dataset.role } });
+        location.reload(); // tải lại để toàn bộ trang áp dụng quyền mới
+      } catch (err) {
+        const box = $('[data-err]', wrap);
+        box.textContent = err.message;
+        box.hidden = false;
+        $$('[data-role]', wrap).forEach((x) => { x.disabled = false; });
+      }
+    };
+  });
+  $('[data-cancel]', wrap)?.addEventListener('click', close);
+  document.body.appendChild(wrap);
+  $('[data-role]', wrap).focus();
+}
+
 renderNav();
 showFlash();
+if (!ROLE) chooseRole();
