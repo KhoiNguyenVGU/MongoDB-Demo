@@ -36,7 +36,7 @@ router.get('/state', async (req, res) => {
 router.post('/run/:id', async (req, res) => {
   const q = QUERY_BY_ID.get(req.params.id);
   if (!q) throw notFound('Không có query này trong bài tập');
-  if (q.write) requireAdmin(req); // User chỉ được chạy các query đọc
+  requireAdmin(req); // User chỉ xem nội dung bài tập, không chạy query
   const ctx = { mflix: db.mflix, demo: db.demo };
   if (q.configurable) ctx.target = exerciseTarget(req.body || {});
   const t = Date.now();

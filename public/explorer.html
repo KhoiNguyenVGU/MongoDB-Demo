@@ -15,12 +15,13 @@
   <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
     <div>
       <h1 class="page-title">Query Explorer</h1>
-      <p class="muted text-sm mt-1">Chạy các bài tập MongoDB trực tiếp trên Atlas, so sánh execution plan và tự viết query</p>
+      <p class="muted text-sm mt-1 admin-only">Chạy các bài tập MongoDB trực tiếp trên Atlas, so sánh execution plan và tự viết query</p>
+      <p class="muted text-sm mt-1 user-only">Các bài tập MongoDB: đọc đề, xem đáp án và copy câu lệnh</p>
     </div>
 
-    <div class="tabs" role="tablist" aria-label="Query Explorer">
+    <div class="tabs admin-only" role="tablist" aria-label="Query Explorer">
       <button class="tab" role="tab" data-tab="exercises" aria-controls="panel-exercises">Bài tập</button>
-      <button class="tab" role="tab" data-tab="index" aria-controls="panel-index">Index vs COLLSCAN</button>
+      <button class="tab admin-only" role="tab" data-tab="index" aria-controls="panel-index">Index vs COLLSCAN</button>
       <button class="tab admin-only" role="tab" data-tab="shell" aria-controls="panel-shell">Mongo Shell</button>
     </div>
 
@@ -29,7 +30,8 @@
       <div class="card p-4 flex flex-wrap items-center gap-3">
         <div class="flex-1 min-w-[240px]">
           <div class="font-semibold">MongoDB Demo Exercise</div>
-          <p class="text-sm muted">Đọc task → thử tự viết query → bấm <b>Hiện đáp án</b> → <b>Chạy</b> để xem kết quả thật từ Atlas. Bài 1, 2, 8 làm bên ngoài ứng dụng.</p>
+          <p class="text-sm muted admin-only">Đọc task → thử tự viết query → bấm <b>Hiện đáp án</b> → <b>Chạy</b> để xem kết quả thật từ Atlas. Bài 1, 2, 8 làm bên ngoài ứng dụng.</p>
+          <p class="text-sm muted user-only">Đọc task → thử tự viết query → bấm <b>Hiện đáp án</b> để đối chiếu. Dùng <b>Copy</b> để dán câu lệnh vào mongosh hoặc Compass. Bài 1, 2, 8 làm bên ngoài ứng dụng.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-sm" id="exState"></div>
         <label class="flex items-center gap-2 text-sm"><span class="switch"><input type="checkbox" id="showAll"><span></span></span>Hiện tất cả đáp án</label>
@@ -38,7 +40,7 @@
         <aside class="ex-side card p-2 hidden lg:block lg:sticky lg:top-20" aria-label="Mục lục bài tập">
           <div class="flex items-center justify-between px-2 pt-1 pb-2">
             <span class="label" style="margin:0">Mục lục</span>
-            <span class="text-xs muted tabular" id="exProgress"></span>
+            <span class="text-xs muted tabular admin-only" id="exProgress"></span>
           </div>
           <nav id="exSide"></nav>
           <button type="button" class="side-top" id="exTop">↑ Lên đầu trang</button>
@@ -51,7 +53,7 @@
     </section>
 
     <!-- ===== Tab 2: Index vs COLLSCAN ===== -->
-    <section id="panel-index" role="tabpanel" data-panel="index" class="space-y-3" hidden>
+    <section id="panel-index" role="tabpanel" data-panel="index" class="space-y-3 admin-only" hidden>
       <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm muted">So sánh khi có index và khi ép <code>COLLSCAN</code> bằng <code>hint({ $natural: 1 })</code>, dùng <code>explain("executionStats")</code></p>
         <button class="btn btn-primary" id="runAll">Chạy tất cả</button>

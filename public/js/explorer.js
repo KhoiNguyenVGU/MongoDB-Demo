@@ -62,5 +62,7 @@ $('#runAll').onclick = async () => {
   $('#runAll').disabled = false;
 };
 
-$('#samples').innerHTML = skeletonRows(3, 'h-32');
-api('/api/explain/samples').then(({ data }) => { samples = data; renderSamples(); }).catch((e) => { $('#samples').innerHTML = errorBox(e.message); });
+if (IS_ADMIN) { // tab này chỉ dành cho Admin; User không gọi API (server trả 403)
+  $('#samples').innerHTML = skeletonRows(3, 'h-32');
+  api('/api/explain/samples').then(({ data }) => { samples = data; renderSamples(); }).catch((e) => { $('#samples').innerHTML = errorBox(e.message); });
+}

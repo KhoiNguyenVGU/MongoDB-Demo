@@ -2,7 +2,7 @@
 
 /* ---------- Tabs ---------- */
 function setTab(name) {
-  if (!$(`[data-panel="${name}"]`) || (name === 'shell' && !IS_ADMIN)) name = 'exercises'; // Shell chỉ dành cho Admin
+  if (!$(`[data-panel="${name}"]`) || (name !== 'exercises' && !IS_ADMIN)) name = 'exercises'; // User chỉ có tab Bài tập
   $$('[data-tab]').forEach((b) => {
     const on = b.dataset.tab === name;
     b.classList.toggle('active', on);
@@ -73,16 +73,13 @@ const queryById = new Map();
 let prevExplain = null; // so sánh 2 lần explain của Bài 7
 
 function queryBlock(q) {
-  const badge = q.write
-    ? `<span class="chip text-xs admin-only ${q.danger ? 'chip-danger' : ''}">${q.danger ? 'xóa dữ liệu' : 'ghi dữ liệu'}</span>`
-      + '<span class="chip text-xs user-only" title="Lệnh ghi/xóa dữ liệu: chỉ Admin được chạy">chỉ Admin chạy</span>'
-    : '';
+  const badge = q.write ? `<span class="chip text-xs admin-only ${q.danger ? 'chip-danger' : ''}">${q.danger ? 'xóa dữ liệu' : 'ghi dữ liệu'}</span>` : '';
   return `
   <div class="ex-query" data-q="${esc(q.id)}">
     <div class="flex flex-col sm:flex-row sm:items-start gap-2">
       <pre class="code flex-1 min-w-0 text-xs" data-shell>${esc(shellFor(q))}</pre>
       <div class="flex sm:flex-col items-center sm:items-stretch gap-1.5 shrink-0 sm:w-28">
-        <button class="btn btn-sm btn-primary${q.write ? ' admin-only' : ''}" data-run>▶ Chạy</button>
+        <button class="btn btn-sm btn-primary admin-only" data-run>▶ Chạy</button>
         <button class="btn btn-sm" data-copy title="Copy lệnh để dán vào mongosh / Compass">Copy</button>${badge}
       </div>
     </div>
@@ -133,7 +130,7 @@ function exerciseCard(ex) {
   <article class="card p-5" id="ex-${ex.no}">
     ${head}
     ${ex.configurable ? targetForm() : ''}
-    ${ex.no === 7 ? '<div id="ex7tip" class="tip mt-3"></div>' : ''}
+    ${ex.no === 7 ? '<div id="ex7tip" class="tip mt-3 admin-only"></div>' : ''}
     ${ex.parts.map((p) => partBlock(p, ex)).join('')}
   </article>`;
 }

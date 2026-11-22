@@ -30,13 +30,10 @@ function requireAdmin(req) {
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-// Chặn mọi thao tác ghi của người không phải admin. Ngoại lệ:
-//  - POST /api/role (chọn vai trò)
-//  - POST /api/exercises/run/:id (route tự chặn các query có write:true)
+// Chặn mọi thao tác ghi của người không phải admin. Ngoại lệ duy nhất: POST /api/role (chọn vai trò).
 function viewerGuard(req, res, next) {
   if (isAdmin(req) || !WRITE_METHODS.has(req.method)) return next();
   if (req.path === '/role') return next();
-  if (req.method === 'POST' && req.path.startsWith('/exercises/run/')) return next();
   return res.status(403).json({ error: new ForbiddenError().message });
 }
 

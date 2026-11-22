@@ -45,8 +45,9 @@ Lần đầu vào (và mỗi khi mở lại trình duyệt) có hộp thoại ch
 | Xem dashboard, movies, theaters, users, sandbox, nội dung bài tập | ✔ | ✔ |
 | Thêm / sửa / xóa dữ liệu (movies, comments, theaters, users, sandbox) | ✔ | ✘ |
 | Mongo Shell | ✔ | ✘ (ẩn tab, API trả 403) |
-| Exercises: chạy query đọc (find, count, explain…) | ✔ | ✔ |
-| Exercises: chạy query ghi/xóa (insert, update, drop, createIndex, đo chi phí index) | ✔ | ✘ |
+| Tab Index vs COLLSCAN | ✔ | ✘ (ẩn tab, API trả 403) |
+| Exercises: xem đề, đáp án, nút Copy | ✔ | ✔ |
+| Exercises: chạy query (nút Chạy) | ✔ | ✘ (ẩn nút, API trả 403) |
 
 Vai trò lưu trong cookie phiên `role`. Phân quyền được **server kiểm tra** ([`src/utils/role.js`](src/utils/role.js)): mọi request ghi (POST/PUT/DELETE) từ người không phải Admin đều bị trả 403, nên không thể vượt quyền bằng cách gọi API trực tiếp. Chưa chọn vai trò thì coi như User.
 

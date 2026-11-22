@@ -4,6 +4,10 @@ const { BSON } = require('mongodb');
 const { mflix } = require('../db');
 const { notFound, describe } = require('../utils/validate');
 const { summarize } = require('../utils/explain');
+const { requireAdmin } = require('../utils/role');
+
+// Tab "Index vs COLLSCAN" chạy explain trên Atlas: chỉ dành cho Admin
+router.use((req, res, next) => { requireAdmin(req); next(); });
 
 let sampleMovieId = null;
 
